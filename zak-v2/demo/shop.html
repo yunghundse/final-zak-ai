@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ModaStyle Shop – Ihr Online Fashion Store</title>
+    <meta name="description" content="Entdecken Sie die neuesten Modetrends. Kostenloser Versand ab 50€.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        .chat-container { position: fixed; bottom: 24px; right: 24px; z-index: 1000; }
+        .chat-bubble { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #8B5CF6, #7C3AED); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4); transition: transform 0.3s, box-shadow 0.3s; }
+        .chat-bubble:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(139, 92, 246, 0.5); }
+        .chat-window { position: absolute; bottom: 80px; right: 0; width: 380px; height: 520px; background: white; border-radius: 20px; box-shadow: 0 10px 50px rgba(0,0,0,0.2); display: none; flex-direction: column; overflow: hidden; }
+        .chat-window.open { display: flex; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-header { background: linear-gradient(135deg, #8B5CF6, #7C3AED); color: white; padding: 20px; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 20px; background: #f9fafb; }
+        .message { margin-bottom: 16px; max-width: 85%; }
+        .message.bot { background: white; padding: 12px 16px; border-radius: 18px 18px 18px 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .message.user { background: linear-gradient(135deg, #8B5CF6, #7C3AED); color: white; padding: 12px 16px; border-radius: 18px 18px 4px 18px; margin-left: auto; }
+        .quick-replies { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .quick-reply { background: #f3e8ff; border: 1px solid #8B5CF6; color: #7C3AED; padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .quick-reply:hover { background: #8B5CF6; color: white; }
+        .chat-input { display: flex; padding: 16px; border-top: 1px solid #e5e7eb; background: white; }
+        .chat-input input { flex: 1; border: 1px solid #d1d5db; border-radius: 24px; padding: 12px 20px; outline: none; }
+        .chat-input input:focus { border-color: #8B5CF6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); }
+        .chat-input button { background: linear-gradient(135deg, #8B5CF6, #7C3AED); color: white; border: none; border-radius: 50%; width: 44px; height: 44px; margin-left: 10px; cursor: pointer; }
+        .typing-indicator { display: flex; gap: 4px; padding: 12px 16px; background: white; border-radius: 18px; width: fit-content; }
+        .typing-indicator span { width: 8px; height: 8px; background: #8B5CF6; border-radius: 50%; animation: bounce 1.4s infinite; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
+        .product-card { transition: transform 0.3s, box-shadow 0.3s; }
+        .product-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="font-['Inter'] bg-white text-gray-900">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="#" class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <span class="text-2xl">👗</span>
+                </div>
+                <div>
+                    <span class="text-xl font-bold text-gray-900">ModaStyle</span>
+                    <span class="block text-sm text-violet-600 font-medium">Fashion Store</span>
+                </div>
+            </a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#produkte" class="text-sm font-medium text-gray-600 hover:text-violet-600">Produkte</a>
+                <a href="#kategorien" class="text-sm font-medium text-gray-600 hover:text-violet-600">Kategorien</a>
+                <a href="#sale" class="text-sm font-medium text-gray-600 hover:text-violet-600">Sale</a>
+                <a href="#kontakt" class="text-sm font-medium text-gray-600 hover:text-violet-600">Kontakt</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="relative">
+                    <span class="text-2xl">🛒</span>
+                    <span class="absolute -top-1 -right-1 bg-violet-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">3</span>
+                </button>
+                <button onclick="toggleChat()" class="bg-violet-500 hover:bg-violet-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition">💬 Hilfe</button>
+            </div>
+        </div>
+    </nav>
+
+    <section class="pt-28 pb-20 bg-gradient-to-br from-violet-50 via-white to-purple-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="inline-flex items-center gap-2 bg-violet-100 text-violet-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
+                        <span class="w-2 h-2 bg-violet-500 rounded-full animate-pulse"></span>
+                        Neu: Winter Kollektion 2026!
+                    </div>
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight mb-6">
+                        Mode die<br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-500">begeistert.</span>
+                    </h1>
+                    <p class="text-xl text-gray-600 mb-8 leading-relaxed">
+                        Entdecken Sie die neuesten Trends der Saison.
+                        Kostenloser Versand ab 50€ und 30 Tage Rückgaberecht.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button class="bg-violet-500 hover:bg-violet-600 text-white px-8 py-4 rounded-full text-lg font-semibold transition shadow-lg shadow-violet-500/30">Jetzt shoppen →</button>
+                        <button class="border-2 border-gray-300 hover:border-violet-500 px-8 py-4 rounded-full text-lg font-semibold transition">🔥 Sale entdecken</button>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="bg-gradient-to-br from-violet-400 to-purple-500 rounded-3xl p-8 text-white">
+                        <h3 class="text-2xl font-bold mb-4">🎁 Heute Sparen</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between"><span>Neukunden-Rabatt</span><span class="font-semibold">15% OFF</span></div>
+                            <div class="flex justify-between"><span>Ab 100€ Bestellung</span><span class="font-semibold">20% OFF</span></div>
+                            <div class="flex justify-between"><span>Newsletter Abo</span><span class="font-semibold">10€ Gutschein</span></div>
+                        </div>
+                        <div class="mt-6 pt-6 border-t border-violet-300/30">
+                            <p class="text-violet-100">Code: WINTER2026</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="produkte" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-black mb-4">Beliebte Produkte</h2>
+                <p class="text-xl text-gray-600">Unsere Kunden lieben diese Styles</p>
+            </div>
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="product-card bg-gray-50 rounded-2xl overflow-hidden">
+                    <div class="h-64 bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center text-6xl">👚</div>
+                    <div class="p-6">
+                        <h3 class="font-bold mb-2">Premium Bluse</h3>
+                        <p class="text-gray-600 text-sm mb-3">Elegante Seidenbluse</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-violet-600 font-bold text-lg">89,99€</span>
+                            <button class="bg-violet-500 text-white px-4 py-2 rounded-full text-sm">🛒</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card bg-gray-50 rounded-2xl overflow-hidden">
+                    <div class="h-64 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-6xl">👖</div>
+                    <div class="p-6">
+                        <h3 class="font-bold mb-2">Designer Jeans</h3>
+                        <p class="text-gray-600 text-sm mb-3">Slim Fit, Stretch</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-violet-600 font-bold text-lg">119,99€</span>
+                            <button class="bg-violet-500 text-white px-4 py-2 rounded-full text-sm">🛒</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card bg-gray-50 rounded-2xl overflow-hidden">
+                    <div class="h-64 bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center text-6xl">👟</div>
+                    <div class="p-6">
+                        <h3 class="font-bold mb-2">Sneaker Limited</h3>
+                        <p class="text-gray-600 text-sm mb-3">Exclusive Edition</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-violet-600 font-bold text-lg">159,99€</span>
+                            <button class="bg-violet-500 text-white px-4 py-2 rounded-full text-sm">🛒</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="product-card bg-gray-50 rounded-2xl overflow-hidden">
+                    <div class="h-64 bg-gradient-to-br from-emerald-100 to-emerald-200 flex items-center justify-center text-6xl">🧥</div>
+                    <div class="p-6">
+                        <h3 class="font-bold mb-2">Winter Jacke</h3>
+                        <p class="text-gray-600 text-sm mb-3">Warm & Stylish</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-violet-600 font-bold text-lg">199,99€</span>
+                            <button class="bg-violet-500 text-white px-4 py-2 rounded-full text-sm">🛒</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-16 bg-gradient-to-r from-violet-500 to-purple-500">
+        <div class="max-w-4xl mx-auto px-6 text-center text-white">
+            <h2 class="text-3xl md:text-4xl font-black mb-4">Brauchen Sie Hilfe beim Shoppen?</h2>
+            <p class="text-xl text-violet-100 mb-8">Unser KI-Berater hilft Ihnen bei Größen, Verfügbarkeit und Bestellungen – 24/7!</p>
+            <button onclick="toggleChat()" class="bg-white text-violet-600 px-8 py-4 rounded-full text-lg font-bold hover:bg-violet-50 transition shadow-xl">💬 Jetzt chatten</button>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-violet-500 rounded-xl flex items-center justify-center">👗</div>
+                    <span class="font-bold">ModaStyle Shop</span>
+                </div>
+                <p class="text-gray-400 text-sm">Diese Demo-Seite wird powered by <a href="../../index.html" class="text-violet-400 hover:underline">ZAK AI NEXO</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="chat-container">
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-header">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">👗</div>
+                    <div>
+                        <div class="font-bold">Shop-Assistent</div>
+                        <div class="text-sm text-violet-100">Powered by NEXO • Online</div>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="absolute top-4 right-4 text-white/80 hover:text-white">✕</button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <p>Hallo! 👋 Willkommen bei ModaStyle!</p>
+                    <p class="mt-2">Ich helfe Ihnen gerne bei Fragen zu Produkten, Bestellungen oder Größen.</p>
+                    <div class="quick-replies">
+                        <button class="quick-reply" onclick="sendQuickReply('Bestellung verfolgen')">📦 Bestellung</button>
+                        <button class="quick-reply" onclick="sendQuickReply('Größenberatung')">📏 Größen</button>
+                        <button class="quick-reply" onclick="sendQuickReply('Retoure')">↩️ Retoure</button>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="Ihre Frage..." onkeypress="if(event.key==='Enter')sendMessage()">
+                <button onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+        <div class="chat-bubble" onclick="toggleChat()">
+            <svg width="28" height="28" fill="white" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+        </div>
+    </div>
+
+    <script>
+        function toggleChat() {
+            document.getElementById('chatWindow').classList.toggle('open');
+        }
+
+        const responses = {
+            bestellung: `📦 Bestellstatus prüfen:
+
+Geben Sie Ihre Bestellnummer ein (z.B. MS-12345) oder:
+
+• Eingeloggt? → Mein Konto → Bestellungen
+• Per E-Mail erhalten Sie Tracking-Updates
+• Lieferzeit: 2-4 Werktage
+
+Haben Sie Ihre Bestellnummer zur Hand?`,
+            groesse: `📏 Größenberatung:
+
+Unsere Größentabelle:
+• XS: 32-34 (Brust 80-84cm)
+• S: 36-38 (Brust 85-89cm)
+• M: 40-42 (Brust 90-94cm)
+• L: 44-46 (Brust 95-99cm)
+• XL: 48-50 (Brust 100-104cm)
+
+Tipp: Im Zweifelsfall eine Größe größer wählen!`,
+            retoure: `↩️ Retoure & Umtausch:
+
+Sie haben 30 Tage Rückgaberecht!
+
+So geht's:
+1. Retourenschein im Paket nutzen
+2. Artikel ungetragen zurücksenden
+3. Geld zurück in 5-7 Tagen
+
+Kostenlose Retoure innerhalb Deutschlands!`,
+            versand: `🚚 Versand & Lieferung:
+
+• Standardversand: 2-4 Werktage (4,95€)
+• Expressversand: 1-2 Werktage (9,95€)
+• Ab 50€: KOSTENLOSER Versand!
+
+Lieferung an Packstation möglich.`,
+            rabatt: `🎁 Aktuelle Rabatte:
+
+• WINTER2026 → 15% auf alles
+• NEUKUNDE → 10€ Willkommensrabatt
+• NEWSLETTER → 10% Extra
+
+Rabatte nicht kombinierbar.`,
+            standard: `Gute Frage! 🛍️
+
+Ich kann Ihnen bei folgenden Themen helfen:
+• Bestellungen & Tracking
+• Größenberatung
+• Retouren & Umtausch
+• Rabattcodes
+
+Wie kann ich Ihnen weiterhelfen?`
+        };
+
+        function getResponse(input) {
+            const lower = input.toLowerCase();
+            if (lower.includes('bestell') || lower.includes('track') || lower.includes('paket') || lower.includes('liefer')) return responses.bestellung;
+            if (lower.includes('größ') || lower.includes('gröss') || lower.includes('size') || lower.includes('passt')) return responses.groesse;
+            if (lower.includes('retour') || lower.includes('zurück') || lower.includes('umtausch')) return responses.retoure;
+            if (lower.includes('versand') || lower.includes('porto') || lower.includes('kosten')) return responses.versand;
+            if (lower.includes('rabatt') || lower.includes('code') || lower.includes('gutschein') || lower.includes('spar')) return responses.rabatt;
+            return responses.standard;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            addMessage(msg, 'user');
+            input.value = '';
+            showTyping();
+            setTimeout(function() {
+                hideTyping();
+                addMessage(getResponse(msg), 'bot');
+            }, 1200);
+        }
+
+        function sendQuickReply(text) {
+            addMessage(text, 'user');
+            showTyping();
+            setTimeout(function() {
+                hideTyping();
+                addMessage(getResponse(text), 'bot');
+            }, 1000);
+        }
+
+        function addMessage(text, type) {
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'message ' + type;
+            div.innerHTML = text.replace(/\n/g, '<br>');
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function showTyping() {
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.id = 'typing';
+            div.className = 'typing-indicator';
+            div.innerHTML = '<span></span><span></span><span></span>';
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typing = document.getElementById('typing');
+            if (typing) typing.remove();
+        }
+
+        setTimeout(function() {
+            if (!document.getElementById('chatWindow').classList.contains('open')) {
+                toggleChat();
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

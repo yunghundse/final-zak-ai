@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verkäufer Dashboard – ZAK AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar { width: 260px; }
+        .main-content { margin-left: 260px; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Sidebar -->
+    <aside class="sidebar fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-40">
+        <div class="p-6">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-xl flex items-center justify-center">
+                    <span class="text-xl">🤖</span>
+                </div>
+                <div>
+                    <span class="font-bold text-gray-900">ZAK AI</span>
+                    <span class="ml-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded">SALES</span>
+                </div>
+            </div>
+        </div>
+
+        <nav class="px-4">
+            <p class="text-xs text-gray-400 uppercase tracking-wider px-3 mb-2">Verkauf</p>
+            <a href="seller.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-cyan-50 text-cyan-700 font-medium mb-1">
+                <span>📊</span> Dashboard
+            </a>
+            <a href="#leads" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 mb-1">
+                <span>👥</span> Leads
+            </a>
+            <a href="#offers" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 mb-1">
+                <span>📋</span> Angebote
+            </a>
+            <a href="#customers" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 mb-1">
+                <span>🏢</span> Kunden
+            </a>
+
+            <p class="text-xs text-gray-400 uppercase tracking-wider px-3 mb-2 mt-6">Übersicht</p>
+            <a href="#products" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 mb-1">
+                <span>📦</span> Produkte
+            </a>
+            <a href="#pricing" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 mb-1">
+                <span>💰</span> Preisliste
+            </a>
+        </nav>
+
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
+            <div class="flex items-center gap-3 px-3 py-2">
+                <div class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                    S
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900">Verkäufer</p>
+                    <p class="text-xs text-gray-500">Sales Team</p>
+                </div>
+                <button onclick="logout()" class="text-gray-400 hover:text-red-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content min-h-screen">
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-200 px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">Verkäufer Dashboard</h1>
+                    <p class="text-sm text-gray-500">Übersicht Ihrer Verkaufsaktivitäten</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-sm text-gray-500">Januar 2026</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="p-8">
+            <!-- Sales Stats -->
+            <div class="grid md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl p-6 border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-500 text-sm">Offene Leads</span>
+                        <span class="text-2xl">👥</span>
+                    </div>
+                    <p class="text-3xl font-bold text-gray-900">12</p>
+                    <p class="text-xs text-green-600 mt-1">+3 diese Woche</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-500 text-sm">Angebote versendet</span>
+                        <span class="text-2xl">📋</span>
+                    </div>
+                    <p class="text-3xl font-bold text-gray-900">8</p>
+                    <p class="text-xs text-gray-500 mt-1">Diesen Monat</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-500 text-sm">Abschlüsse</span>
+                        <span class="text-2xl">✅</span>
+                    </div>
+                    <p class="text-3xl font-bold text-cyan-600">3</p>
+                    <p class="text-xs text-gray-500 mt-1">Diesen Monat</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-500 text-sm">Umsatz</span>
+                        <span class="text-2xl">💰</span>
+                    </div>
+                    <p class="text-3xl font-bold text-green-600">€2.800</p>
+                    <p class="text-xs text-gray-500 mt-1">Diesen Monat</p>
+                </div>
+            </div>
+
+            <!-- Leads & Pricing -->
+            <div class="grid lg:grid-cols-2 gap-6 mb-8">
+                <!-- Leads -->
+                <div class="bg-white rounded-xl border border-gray-100" id="leads">
+                    <div class="p-6 border-b border-gray-100">
+                        <h2 class="font-semibold text-gray-900">Aktuelle Leads</h2>
+                    </div>
+                    <div class="divide-y divide-gray-50">
+                        <div class="p-4 flex items-center gap-4">
+                            <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">🏢</div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">Bäckerei Müller</p>
+                                <p class="text-xs text-gray-500">Interesse an Standard-Paket</p>
+                            </div>
+                            <span class="bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs">Warm</span>
+                        </div>
+                        <div class="p-4 flex items-center gap-4">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">🏠</div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">Immobilien Schmidt</p>
+                                <p class="text-xs text-gray-500">Individuelles Angebot angefragt</p>
+                            </div>
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">Heiß</span>
+                        </div>
+                        <div class="p-4 flex items-center gap-4">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">💪</div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">FitLife Studio</p>
+                                <p class="text-xs text-gray-500">Demo angefragt</p>
+                            </div>
+                            <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">Neu</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing Guide -->
+                <div class="bg-white rounded-xl border border-gray-100" id="pricing">
+                    <div class="p-6 border-b border-gray-100">
+                        <h2 class="font-semibold text-gray-900">Preisliste (Verkauf)</h2>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="font-medium">Standard Chatbot</h3>
+                                <span class="text-cyan-600 font-bold">500 - 800€</span>
+                            </div>
+                            <p class="text-xs text-gray-500">Einfacher Bot mit Basis-Funktionen</p>
+                            <ul class="text-xs text-gray-600 mt-2 space-y-1">
+                                <li>✓ FAQ-Antworten</li>
+                                <li>✓ Kontaktformular</li>
+                                <li>✓ E-Mail-Benachrichtigung</li>
+                            </ul>
+                        </div>
+                        <div class="border border-cyan-200 bg-cyan-50 rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="font-medium">Professional Chatbot</h3>
+                                <span class="text-cyan-600 font-bold">800 - 1.200€</span>
+                            </div>
+                            <p class="text-xs text-gray-500">Erweiterte Funktionen & Integrationen</p>
+                            <ul class="text-xs text-gray-600 mt-2 space-y-1">
+                                <li>✓ Alles aus Standard</li>
+                                <li>✓ Terminbuchung</li>
+                                <li>✓ CRM-Integration</li>
+                                <li>✓ Analytics Dashboard</li>
+                            </ul>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="font-medium">Individuell / Enterprise</h3>
+                                <span class="text-gray-600 font-bold">Auf Anfrage</span>
+                            </div>
+                            <p class="text-xs text-gray-500">Maßgeschneiderte Lösung</p>
+                            <p class="text-xs text-amber-600 mt-2">⚠️ Rücksprache mit Admin erforderlich</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Info -->
+            <div class="bg-white rounded-xl border border-gray-100" id="products">
+                <div class="p-6 border-b border-gray-100">
+                    <h2 class="font-semibold text-gray-900">Produktübersicht</h2>
+                </div>
+                <div class="p-6">
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div class="text-center p-4 bg-gray-50 rounded-lg">
+                            <div class="text-4xl mb-3">🤖</div>
+                            <h3 class="font-medium mb-1">Chatbot</h3>
+                            <p class="text-sm text-gray-500">KI-gestützter Assistent für Websites</p>
+                        </div>
+                        <div class="text-center p-4 bg-gray-50 rounded-lg">
+                            <div class="text-4xl mb-3">📅</div>
+                            <h3 class="font-medium mb-1">Terminbuchung</h3>
+                            <p class="text-sm text-gray-500">Automatische Terminverwaltung</p>
+                        </div>
+                        <div class="text-center p-4 bg-gray-50 rounded-lg">
+                            <div class="text-4xl mb-3">📊</div>
+                            <h3 class="font-medium mb-1">Analytics</h3>
+                            <p class="text-sm text-gray-500">Detaillierte Auswertungen</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-6">
+                <div class="flex items-start gap-4">
+                    <div class="text-2xl">ℹ️</div>
+                    <div>
+                        <h3 class="font-medium text-amber-800 mb-1">Verkäufer-Hinweis</h3>
+                        <p class="text-sm text-amber-700">
+                            Als Verkäufer haben Sie Zugriff auf Leads, Angebote und Preislisten.
+                            Für Systemeinstellungen, Newsletter-Verwaltung und erweiterte Funktionen
+                            wenden Sie sich bitte an den Administrator.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Check seller auth
+        const sellerAuth = localStorage.getItem('zakSellerAuth');
+        const adminAuth = localStorage.getItem('zakAdminAuth');
+
+        if (sellerAuth !== 'true' && adminAuth !== 'true') {
+            window.location.href = '../index.html';
+        }
+
+        function logout() {
+            localStorage.removeItem('zakSellerAuth');
+            localStorage.removeItem('zakAdminAuth');
+            window.location.href = '../index.html';
+        }
+    </script>
+</body>
+</html>

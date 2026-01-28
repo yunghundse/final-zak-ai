@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard – ZAK AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar { width: 280px; }
+        .main-content { margin-left: 280px; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <!-- Sidebar -->
+    <aside class="sidebar fixed top-0 left-0 h-full bg-gray-800 border-r border-gray-700 z-40">
+        <div class="p-6">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-xl flex items-center justify-center">
+                    <span class="text-xl">🤖</span>
+                </div>
+                <div>
+                    <span class="font-bold text-white">ZAK AI</span>
+                    <span class="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded">ADMIN</span>
+                </div>
+            </div>
+        </div>
+
+        <nav class="px-4">
+            <p class="text-xs text-gray-500 uppercase tracking-wider px-3 mb-2">Übersicht</p>
+            <a href="admin.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-cyan-600/20 text-cyan-400 font-medium mb-1">
+                <span>📊</span> Dashboard
+            </a>
+            <a href="#users" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:bg-gray-700 mb-1">
+                <span>👥</span> Benutzer
+            </a>
+            <a href="#bots" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:bg-gray-700 mb-1">
+                <span>🤖</span> Chatbots
+            </a>
+            <a href="#analytics" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:bg-gray-700 mb-1">
+                <span>📈</span> Analytics
+            </a>
+
+            <p class="text-xs text-gray-500 uppercase tracking-wider px-3 mb-2 mt-6">Verwaltung</p>
+            <a href="#newsletter" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:bg-gray-700 mb-1">
+                <span>📧</span> Newsletter
+            </a>
+            <a href="#orders" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:bg-gray-700 mb-1">
+                <span>📦</span> Bestellungen
+            </a>
+            <a href="#settings" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:bg-gray-700 mb-1">
+                <span>⚙️</span> Einstellungen
+            </a>
+
+            <p class="text-xs text-gray-500 uppercase tracking-wider px-3 mb-2 mt-6">Team</p>
+            <a href="seller.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:bg-gray-700 mb-1">
+                <span>💼</span> Verkäufer-Ansicht
+            </a>
+        </nav>
+
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700">
+            <div class="flex items-center gap-3 px-3 py-2">
+                <div class="w-9 h-9 bg-red-500 rounded-full flex items-center justify-center text-white font-bold">
+                    A
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-white">Admin</p>
+                    <p class="text-xs text-gray-500">Besitzer</p>
+                </div>
+                <button onclick="logout()" class="text-gray-400 hover:text-red-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content min-h-screen">
+        <!-- Header -->
+        <header class="bg-gray-800 border-b border-gray-700 px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-bold">Admin Dashboard</h1>
+                    <p class="text-sm text-gray-400">Vollständige Systemübersicht</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div id="systemStatus" class="flex items-center gap-2 bg-green-500/20 text-green-400 px-4 py-2 rounded-lg">
+                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                        Alle Systeme online
+                    </div>
+                    <span class="text-gray-400 text-sm" id="lastUpdate">Zuletzt aktualisiert: --</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="p-8">
+            <!-- Key Stats -->
+            <div class="grid md:grid-cols-5 gap-4 mb-8">
+                <div class="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-400 text-sm">Website-Besuche</span>
+                        <span class="text-green-400 text-xs">+12%</span>
+                    </div>
+                    <p id="totalVisits" class="text-3xl font-bold">2,847</p>
+                    <p class="text-xs text-gray-500 mt-1">Diesen Monat</p>
+                </div>
+                <div class="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-400 text-sm">Bot-Nutzungen</span>
+                        <span class="text-green-400 text-xs">+8%</span>
+                    </div>
+                    <p id="botUsage" class="text-3xl font-bold">1,234</p>
+                    <p class="text-xs text-gray-500 mt-1">Gespräche gesamt</p>
+                </div>
+                <div class="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-400 text-sm">Registrierungen</span>
+                        <span class="text-green-400 text-xs">+15%</span>
+                    </div>
+                    <p id="totalUsers" class="text-3xl font-bold">127</p>
+                    <p class="text-xs text-gray-500 mt-1">Aktive Benutzer</p>
+                </div>
+                <div class="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-400 text-sm">Newsletter</span>
+                        <span class="text-green-400 text-xs">+23%</span>
+                    </div>
+                    <p id="newsletterSubs" class="text-3xl font-bold">89</p>
+                    <p class="text-xs text-gray-500 mt-1">Abonnenten</p>
+                </div>
+                <div class="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-400 text-sm">Umsatz</span>
+                        <span class="text-green-400 text-xs">+18%</span>
+                    </div>
+                    <p id="revenue" class="text-3xl font-bold">€4,200</p>
+                    <p class="text-xs text-gray-500 mt-1">Diesen Monat</p>
+                </div>
+            </div>
+
+            <!-- System Status & Charts -->
+            <div class="grid lg:grid-cols-3 gap-6 mb-8">
+                <!-- System Status -->
+                <div class="bg-gray-800 rounded-xl border border-gray-700">
+                    <div class="p-5 border-b border-gray-700">
+                        <h2 class="font-semibold">System Status</h2>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 bg-green-400 rounded-full"></span>
+                                <span class="text-sm">Website</span>
+                            </div>
+                            <span class="text-green-400 text-sm">Online</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 bg-green-400 rounded-full"></span>
+                                <span class="text-sm">Chatbot Server</span>
+                            </div>
+                            <span class="text-green-400 text-sm">Online</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 bg-green-400 rounded-full"></span>
+                                <span class="text-sm">Datenbank</span>
+                            </div>
+                            <span class="text-green-400 text-sm">Online</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 bg-green-400 rounded-full"></span>
+                                <span class="text-sm">Auth Service</span>
+                            </div>
+                            <span class="text-green-400 text-sm">Online</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 bg-green-400 rounded-full"></span>
+                                <span class="text-sm">Newsletter Service</span>
+                            </div>
+                            <span class="text-green-400 text-sm">Online</span>
+                        </div>
+                        <div class="pt-4 border-t border-gray-700">
+                            <p class="text-xs text-gray-500">Uptime: 99.9% (30 Tage)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Traffic Chart -->
+                <div class="lg:col-span-2 bg-gray-800 rounded-xl border border-gray-700">
+                    <div class="p-5 border-b border-gray-700 flex items-center justify-between">
+                        <h2 class="font-semibold">Website Traffic</h2>
+                        <select class="bg-gray-700 border-none text-sm rounded-lg px-3 py-1.5 text-gray-300">
+                            <option>Letzte 7 Tage</option>
+                            <option>Letzte 30 Tage</option>
+                            <option>Letztes Jahr</option>
+                        </select>
+                    </div>
+                    <div class="p-5">
+                        <canvas id="trafficChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users & Newsletter -->
+            <div class="grid lg:grid-cols-2 gap-6 mb-8" id="users">
+                <!-- Recent Users -->
+                <div class="bg-gray-800 rounded-xl border border-gray-700">
+                    <div class="p-5 border-b border-gray-700 flex items-center justify-between">
+                        <h2 class="font-semibold">Neue Benutzer</h2>
+                        <button class="text-cyan-400 text-sm hover:text-cyan-300">Alle anzeigen</button>
+                    </div>
+                    <div class="divide-y divide-gray-700" id="usersList">
+                        <div class="p-4 flex items-center gap-4">
+                            <div class="w-10 h-10 bg-cyan-600 rounded-full flex items-center justify-center">M</div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">Max Mustermann</p>
+                                <p class="text-xs text-gray-500">max@example.com</p>
+                            </div>
+                            <span class="text-xs text-gray-500">Vor 2h</span>
+                        </div>
+                        <div class="p-4 flex items-center gap-4">
+                            <div class="w-10 h-10 bg-violet-600 rounded-full flex items-center justify-center">S</div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">Sarah Schmidt</p>
+                                <p class="text-xs text-gray-500">sarah@company.de</p>
+                            </div>
+                            <span class="text-xs text-gray-500">Vor 5h</span>
+                        </div>
+                        <div class="p-4 flex items-center gap-4">
+                            <div class="w-10 h-10 bg-amber-600 rounded-full flex items-center justify-center">T</div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">Thomas Weber</p>
+                                <p class="text-xs text-gray-500">t.weber@firma.de</p>
+                            </div>
+                            <span class="text-xs text-gray-500">Gestern</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Newsletter -->
+                <div class="bg-gray-800 rounded-xl border border-gray-700" id="newsletter">
+                    <div class="p-5 border-b border-gray-700 flex items-center justify-between">
+                        <h2 class="font-semibold">Newsletter Abonnenten</h2>
+                        <button onclick="exportNewsletter()" class="bg-cyan-600 hover:bg-cyan-700 text-white text-sm px-4 py-1.5 rounded-lg transition">
+                            Exportieren
+                        </button>
+                    </div>
+                    <div class="divide-y divide-gray-700" id="newsletterList">
+                        <div class="p-4 flex items-center justify-between">
+                            <div>
+                                <p class="text-sm">newsletter@example.com</p>
+                                <p class="text-xs text-gray-500">Angemeldet: 15.01.2026</p>
+                            </div>
+                            <span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs">Aktiv</span>
+                        </div>
+                        <div class="p-4 flex items-center justify-between">
+                            <div>
+                                <p class="text-sm">info@firma.de</p>
+                                <p class="text-xs text-gray-500">Angemeldet: 14.01.2026</p>
+                            </div>
+                            <span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs">Aktiv</span>
+                        </div>
+                        <div class="p-4 flex items-center justify-between">
+                            <div>
+                                <p class="text-sm">kontakt@shop.de</p>
+                                <p class="text-xs text-gray-500">Angemeldet: 13.01.2026</p>
+                            </div>
+                            <span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs">Aktiv</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Chatbots -->
+            <div class="bg-gray-800 rounded-xl border border-gray-700 mb-8" id="bots">
+                <div class="p-5 border-b border-gray-700 flex items-center justify-between">
+                    <h2 class="font-semibold">Aktive Chatbots</h2>
+                    <span class="text-gray-400 text-sm">6 Bots aktiv</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-700/50">
+                            <tr>
+                                <th class="text-left px-5 py-3 text-sm font-medium text-gray-400">Bot</th>
+                                <th class="text-left px-5 py-3 text-sm font-medium text-gray-400">Kunde</th>
+                                <th class="text-left px-5 py-3 text-sm font-medium text-gray-400">Chats</th>
+                                <th class="text-left px-5 py-3 text-sm font-medium text-gray-400">Status</th>
+                                <th class="text-left px-5 py-3 text-sm font-medium text-gray-400">Plan</th>
+                                <th class="text-right px-5 py-3 text-sm font-medium text-gray-400">Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-700">
+                            <tr>
+                                <td class="px-5 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xl">🦶</span>
+                                        <span>Podologie Bot</span>
+                                    </div>
+                                </td>
+                                <td class="px-5 py-4 text-gray-400">Demo</td>
+                                <td class="px-5 py-4">234</td>
+                                <td class="px-5 py-4">
+                                    <span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs">Online</span>
+                                </td>
+                                <td class="px-5 py-4 text-gray-400">Demo</td>
+                                <td class="px-5 py-4 text-right">
+                                    <button class="text-cyan-400 hover:text-cyan-300 text-sm">Bearbeiten</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-5 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xl">👗</span>
+                                        <span>Fashion Shop Bot</span>
+                                    </div>
+                                </td>
+                                <td class="px-5 py-4 text-gray-400">Demo</td>
+                                <td class="px-5 py-4">189</td>
+                                <td class="px-5 py-4">
+                                    <span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs">Online</span>
+                                </td>
+                                <td class="px-5 py-4 text-gray-400">Demo</td>
+                                <td class="px-5 py-4 text-right">
+                                    <button class="text-cyan-400 hover:text-cyan-300 text-sm">Bearbeiten</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="grid md:grid-cols-4 gap-4">
+                <button class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl p-5 text-left transition">
+                    <div class="text-2xl mb-2">📧</div>
+                    <p class="font-medium">Newsletter senden</p>
+                    <p class="text-xs text-gray-500 mt-1">An 89 Abonnenten</p>
+                </button>
+                <button class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl p-5 text-left transition">
+                    <div class="text-2xl mb-2">📊</div>
+                    <p class="font-medium">Bericht erstellen</p>
+                    <p class="text-xs text-gray-500 mt-1">PDF exportieren</p>
+                </button>
+                <button class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl p-5 text-left transition">
+                    <div class="text-2xl mb-2">👤</div>
+                    <p class="font-medium">Benutzer anlegen</p>
+                    <p class="text-xs text-gray-500 mt-1">Neuen Kunden</p>
+                </button>
+                <button class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl p-5 text-left transition">
+                    <div class="text-2xl mb-2">⚙️</div>
+                    <p class="font-medium">Einstellungen</p>
+                    <p class="text-xs text-gray-500 mt-1">System konfigurieren</p>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Check admin auth
+        const adminAuth = localStorage.getItem('zakAdminAuth');
+        if (adminAuth !== 'true') {
+            window.location.href = '../demo/admin/login.html';
+        }
+
+        // Update last update time
+        document.getElementById('lastUpdate').textContent = 'Zuletzt aktualisiert: ' + new Date().toLocaleTimeString('de-DE');
+
+        // Traffic Chart
+        const ctx = document.getElementById('trafficChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
+                datasets: [{
+                    label: 'Besucher',
+                    data: [320, 420, 380, 510, 490, 280, 350],
+                    borderColor: '#06b6d4',
+                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }, {
+                    label: 'Bot-Nutzung',
+                    data: [180, 220, 190, 280, 250, 120, 180],
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: { color: '#9ca3af' }
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: { color: '#374151' },
+                        ticks: { color: '#9ca3af' }
+                    },
+                    x: {
+                        grid: { color: '#374151' },
+                        ticks: { color: '#9ca3af' }
+                    }
+                }
+            }
+        });
+
+        // Load real data from Firestore
+        async function loadDashboardData() {
+            try {
+                // Get users count
+                const usersSnapshot = await db.collection('users').get();
+                document.getElementById('totalUsers').textContent = usersSnapshot.size;
+
+                // Get newsletter count
+                const newsletterSnapshot = await db.collection('newsletter').get();
+                document.getElementById('newsletterSubs').textContent = newsletterSnapshot.size;
+
+                // Update users list
+                const usersList = document.getElementById('usersList');
+                usersList.innerHTML = '';
+                usersSnapshot.docs.slice(0, 5).forEach(doc => {
+                    const user = doc.data();
+                    const initial = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
+                    usersList.innerHTML += `
+                        <div class="p-4 flex items-center gap-4">
+                            <div class="w-10 h-10 bg-cyan-600 rounded-full flex items-center justify-center">${initial}</div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">${user.displayName || 'Unbekannt'}</p>
+                                <p class="text-xs text-gray-500">${user.email}</p>
+                            </div>
+                            <span class="text-xs text-gray-500">${user.plan || 'Free'}</span>
+                        </div>
+                    `;
+                });
+
+                // Update newsletter list
+                const newsletterList = document.getElementById('newsletterList');
+                newsletterList.innerHTML = '';
+                newsletterSnapshot.docs.slice(0, 5).forEach(doc => {
+                    const sub = doc.data();
+                    const date = sub.subscribedAt?.toDate?.() || new Date();
+                    newsletterList.innerHTML += `
+                        <div class="p-4 flex items-center justify-between">
+                            <div>
+                                <p class="text-sm">${sub.email}</p>
+                                <p class="text-xs text-gray-500">Angemeldet: ${date.toLocaleDateString('de-DE')}</p>
+                            </div>
+                            <span class="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs">Aktiv</span>
+                        </div>
+                    `;
+                });
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        loadDashboardData();
+
+        function exportNewsletter() {
+            alert('Newsletter-Export wird vorbereitet...');
+        }
+
+        function logout() {
+            localStorage.removeItem('zakAdminAuth');
+            localStorage.removeItem('zakAdminUser');
+            window.location.href = '../index.html';
+        }
+    </script>
+</body>
+</html>

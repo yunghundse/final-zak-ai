@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bäckerei Goldkruste – Traditionelles Handwerk seit 1952</title>
+    <meta name="description" content="Frische Backwaren direkt aus dem Ofen. Jetzt online bestellen oder vorbestellen!">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        .chat-container { position: fixed; bottom: 24px; right: 24px; z-index: 1000; }
+        .chat-bubble { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #F59E0B, #D97706); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4); transition: transform 0.3s, box-shadow 0.3s; }
+        .chat-bubble:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(245, 158, 11, 0.5); }
+        .chat-window { position: absolute; bottom: 80px; right: 0; width: 380px; height: 520px; background: white; border-radius: 20px; box-shadow: 0 10px 50px rgba(0,0,0,0.2); display: none; flex-direction: column; overflow: hidden; }
+        .chat-window.open { display: flex; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-header { background: linear-gradient(135deg, #F59E0B, #D97706); color: white; padding: 20px; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 20px; background: #fffbeb; }
+        .message { margin-bottom: 16px; max-width: 85%; }
+        .message.bot { background: white; padding: 12px 16px; border-radius: 18px 18px 18px 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .message.user { background: linear-gradient(135deg, #F59E0B, #D97706); color: white; padding: 12px 16px; border-radius: 18px 18px 4px 18px; margin-left: auto; }
+        .quick-replies { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .quick-reply { background: #fef3c7; border: 1px solid #F59E0B; color: #D97706; padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .quick-reply:hover { background: #F59E0B; color: white; }
+        .chat-input { display: flex; padding: 16px; border-top: 1px solid #e5e7eb; background: white; }
+        .chat-input input { flex: 1; border: 1px solid #d1d5db; border-radius: 24px; padding: 12px 20px; outline: none; }
+        .chat-input input:focus { border-color: #F59E0B; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); }
+        .chat-input button { background: linear-gradient(135deg, #F59E0B, #D97706); color: white; border: none; border-radius: 50%; width: 44px; height: 44px; margin-left: 10px; cursor: pointer; }
+        .typing-indicator { display: flex; gap: 4px; padding: 12px 16px; background: white; border-radius: 18px; width: fit-content; }
+        .typing-indicator span { width: 8px; height: 8px; background: #F59E0B; border-radius: 50%; animation: bounce 1.4s infinite; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
+    </style>
+</head>
+<body class="font-['Inter'] bg-white text-gray-900">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="#" class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center">
+                    <span class="text-2xl">🥐</span>
+                </div>
+                <div>
+                    <span class="text-xl font-bold text-gray-900">Bäckerei</span>
+                    <span class="block text-sm text-amber-600 font-medium">Goldkruste</span>
+                </div>
+            </a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#sortiment" class="text-sm font-medium text-gray-600 hover:text-amber-600">Sortiment</a>
+                <a href="#vorbestellen" class="text-sm font-medium text-gray-600 hover:text-amber-600">Vorbestellen</a>
+                <a href="#filialen" class="text-sm font-medium text-gray-600 hover:text-amber-600">Filialen</a>
+                <a href="#kontakt" class="text-sm font-medium text-gray-600 hover:text-amber-600">Kontakt</a>
+            </div>
+            <button onclick="toggleChat()" class="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition">🥖 Bestellen</button>
+        </div>
+    </nav>
+
+    <section class="pt-28 pb-20 bg-gradient-to-br from-amber-50 via-white to-orange-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="inline-flex items-center gap-2 bg-amber-100 text-amber-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
+                        <span class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+                        Frisch aus dem Ofen!
+                    </div>
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight mb-6">
+                        Tradition &<br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-500">Handwerk.</span>
+                    </h1>
+                    <p class="text-xl text-gray-600 mb-8 leading-relaxed">
+                        Seit 1952 backen wir mit Liebe und besten Zutaten.
+                        Jetzt ganz einfach per Chat vorbestellen!
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button onclick="toggleChat()" class="bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 rounded-full text-lg font-semibold transition shadow-lg shadow-amber-500/30">📱 Per Chat bestellen</button>
+                        <a href="tel:+4930987654" class="border-2 border-gray-300 hover:border-amber-500 px-8 py-4 rounded-full text-lg font-semibold transition text-center">📞 030 - 987 654</a>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="bg-gradient-to-br from-amber-400 to-orange-500 rounded-3xl p-8 text-white">
+                        <h3 class="text-2xl font-bold mb-4">🕐 Öffnungszeiten</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between"><span>Montag - Freitag</span><span class="font-semibold">6:00 - 18:00</span></div>
+                            <div class="flex justify-between"><span>Samstag</span><span class="font-semibold">6:00 - 14:00</span></div>
+                            <div class="flex justify-between text-amber-200"><span>Sonntag</span><span>7:00 - 12:00</span></div>
+                        </div>
+                        <div class="mt-6 pt-6 border-t border-amber-300/30">
+                            <p class="text-amber-100">📍 Brotstraße 15, 10115 Berlin</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="sortiment" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-black mb-4">Unser Sortiment</h2>
+                <p class="text-xl text-gray-600">Frisch gebacken, jeden Tag</p>
+            </div>
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="bg-amber-50 rounded-2xl p-6 text-center hover:shadow-xl transition">
+                    <div class="text-5xl mb-4">🥖</div>
+                    <h3 class="font-bold mb-2">Brote</h3>
+                    <p class="text-gray-600 text-sm mb-3">Bauernbrot, Vollkorn, Sauerteig</p>
+                    <p class="text-amber-600 font-semibold">Ab 3,50€</p>
+                </div>
+                <div class="bg-amber-50 rounded-2xl p-6 text-center hover:shadow-xl transition">
+                    <div class="text-5xl mb-4">🥐</div>
+                    <h3 class="font-bold mb-2">Brötchen</h3>
+                    <p class="text-gray-600 text-sm mb-3">Normale, Körner, Laugen</p>
+                    <p class="text-amber-600 font-semibold">Ab 0,45€</p>
+                </div>
+                <div class="bg-amber-50 rounded-2xl p-6 text-center hover:shadow-xl transition">
+                    <div class="text-5xl mb-4">🥧</div>
+                    <h3 class="font-bold mb-2">Kuchen</h3>
+                    <p class="text-gray-600 text-sm mb-3">Torten, Blechkuchen, Tartes</p>
+                    <p class="text-amber-600 font-semibold">Ab 2,80€</p>
+                </div>
+                <div class="bg-amber-50 rounded-2xl p-6 text-center hover:shadow-xl transition">
+                    <div class="text-5xl mb-4">☕</div>
+                    <h3 class="font-bold mb-2">Café</h3>
+                    <p class="text-gray-600 text-sm mb-3">Kaffee, Tee, Snacks</p>
+                    <p class="text-amber-600 font-semibold">Ab 2,50€</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-16 bg-gradient-to-r from-amber-500 to-orange-500">
+        <div class="max-w-4xl mx-auto px-6 text-center text-white">
+            <h2 class="text-3xl md:text-4xl font-black mb-4">📱 Jetzt per Chat vorbestellen!</h2>
+            <p class="text-xl text-amber-100 mb-8">Kein Anstehen, keine Wartezeit – bestellen Sie Ihre Backwaren bequem per Chat und holen Sie sie fertig verpackt ab!</p>
+            <button onclick="toggleChat()" class="bg-white text-amber-600 px-8 py-4 rounded-full text-lg font-bold hover:bg-amber-50 transition shadow-xl">🥖 Jetzt bestellen</button>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center">🥐</div>
+                    <span class="font-bold">Bäckerei Goldkruste</span>
+                </div>
+                <p class="text-gray-400 text-sm">Diese Demo-Seite wird powered by <a href="../../index.html" class="text-amber-400 hover:underline">ZAK AI NEXO</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="chat-container">
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-header">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">🥐</div>
+                    <div>
+                        <div class="font-bold">Bestell-Assistent</div>
+                        <div class="text-sm text-amber-100">Powered by NEXO • Online</div>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="absolute top-4 right-4 text-white/80 hover:text-white">✕</button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <p>Guten Tag! 👋 Willkommen bei Bäckerei Goldkruste!</p>
+                    <p class="mt-2">Ich nehme gerne Ihre Bestellung auf. Was darf es sein?</p>
+                    <div class="quick-replies">
+                        <button class="quick-reply" onclick="sendQuickReply('Brote')">🥖 Brote</button>
+                        <button class="quick-reply" onclick="sendQuickReply('Brötchen')">🥐 Brötchen</button>
+                        <button class="quick-reply" onclick="sendQuickReply('Kuchen bestellen')">🎂 Kuchen</button>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="Ihre Bestellung..." onkeypress="if(event.key==='Enter')sendMessage()">
+                <button onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+        <div class="chat-bubble" onclick="toggleChat()">
+            <svg width="28" height="28" fill="white" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+        </div>
+    </div>
+
+    <script>
+        function toggleChat() {
+            document.getElementById('chatWindow').classList.toggle('open');
+        }
+
+        const responses = {
+            brote: `🥖 Unsere Brote:
+
+• Bauernbrot (750g) - 4,50€
+• Vollkornbrot (500g) - 3,80€
+• Sauerteigbrot (750g) - 5,20€
+• Dinkelbrot (500g) - 4,90€
+• Roggenbrot (1kg) - 5,50€
+
+Wann möchten Sie abholen?
+(z.B. "Morgen 8 Uhr")`,
+            broetchen: `🥐 Unsere Brötchen:
+
+• Normale Brötchen - 0,45€
+• Körnerbrötchen - 0,65€
+• Laugenbrötchen - 0,75€
+• Croissants - 1,50€
+• Brezeln - 1,20€
+
+Wie viele möchten Sie bestellen?`,
+            kuchen: `🎂 Kuchen & Torten:
+
+Für Vorbestellungen (mind. 1 Tag vorher):
+• Erdbeertorte (8 Stk.) - 28€
+• Schwarzwälder Kirsch - 32€
+• Käsekuchen - 22€
+• Apfelkuchen - 18€
+
+Für welchen Anlass?`,
+            abholen: `⏰ Abholzeiten:
+
+Ihre Bestellung wird notiert für:
+• Bitte nennen Sie Datum und Uhrzeit
+• Mindestens 2 Stunden Vorlauf
+• Bei Torten: 1 Tag vorher
+
+Wir bereiten alles frisch für Sie vor!`,
+            bezahlung: `💳 Bezahlung:
+
+Sie können vor Ort bezahlen:
+• Bar
+• EC-Karte
+• Kreditkarte
+
+Die Bestellung ist unverbindlich bis zur Abholung.`,
+            standard: `Gerne helfe ich Ihnen! 🥐
+
+Was möchten Sie bestellen?
+• Brote (Bauern, Vollkorn, Sauerteig...)
+• Brötchen & Croissants
+• Kuchen & Torten
+
+Oder haben Sie eine andere Frage?`
+        };
+
+        function getResponse(input) {
+            const lower = input.toLowerCase();
+            if (lower.includes('brot') && !lower.includes('brötchen')) return responses.brote;
+            if (lower.includes('brötchen') || lower.includes('croissant') || lower.includes('brezel')) return responses.broetchen;
+            if (lower.includes('kuchen') || lower.includes('torte') || lower.includes('geburtstag')) return responses.kuchen;
+            if (lower.includes('abhol') || lower.includes('uhr') || lower.includes('morgen') || lower.includes('wann')) return responses.abholen;
+            if (lower.includes('bezahl') || lower.includes('karte') || lower.includes('bar')) return responses.bezahlung;
+            return responses.standard;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            addMessage(msg, 'user');
+            input.value = '';
+            showTyping();
+            setTimeout(function() {
+                hideTyping();
+                addMessage(getResponse(msg), 'bot');
+            }, 1200);
+        }
+
+        function sendQuickReply(text) {
+            addMessage(text, 'user');
+            showTyping();
+            setTimeout(function() {
+                hideTyping();
+                addMessage(getResponse(text), 'bot');
+            }, 1000);
+        }
+
+        function addMessage(text, type) {
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'message ' + type;
+            div.innerHTML = text.replace(/\n/g, '<br>');
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function showTyping() {
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.id = 'typing';
+            div.className = 'typing-indicator';
+            div.innerHTML = '<span></span><span></span><span></span>';
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typing = document.getElementById('typing');
+            if (typing) typing.remove();
+        }
+
+        setTimeout(function() {
+            if (!document.getElementById('chatWindow').classList.contains('open')) {
+                toggleChat();
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

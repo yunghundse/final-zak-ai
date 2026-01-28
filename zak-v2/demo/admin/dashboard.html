@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard – ZAK AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="min-h-screen bg-gray-100">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-xl flex items-center justify-center">
+                    <span class="text-xl">🤖</span>
+                </div>
+                <div>
+                    <span class="font-bold text-gray-900">ZAK AI</span>
+                    <span class="text-gray-400 text-sm ml-2">Admin</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="adminName" class="text-sm text-gray-600"></span>
+                <button onclick="logout()" class="text-sm text-red-500 hover:text-red-600">Abmelden</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Stats -->
+        <div class="grid md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-xl p-5">
+                <p class="text-gray-500 text-sm">Aktive Demos</p>
+                <p class="text-2xl font-bold text-gray-900">6</p>
+            </div>
+            <div class="bg-white rounded-xl p-5">
+                <p class="text-gray-500 text-sm">Registrierte Nutzer</p>
+                <p class="text-2xl font-bold text-gray-900">127</p>
+            </div>
+            <div class="bg-white rounded-xl p-5">
+                <p class="text-gray-500 text-sm">Newsletter</p>
+                <p class="text-2xl font-bold text-gray-900">89</p>
+            </div>
+            <div class="bg-white rounded-xl p-5">
+                <p class="text-gray-500 text-sm">Kapazität</p>
+                <p class="text-2xl font-bold text-cyan-600">17/20</p>
+            </div>
+        </div>
+
+        <!-- Demos -->
+        <h2 class="text-xl font-bold mb-4">Demo-Übersicht</h2>
+        <div class="bg-white rounded-xl overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Demo</th>
+                        <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Branche</th>
+                        <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Status</th>
+                        <th class="text-left px-6 py-3 text-sm font-medium text-gray-500">Zugriff</th>
+                        <th class="text-right px-6 py-3 text-sm font-medium text-gray-500">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">🦶</span>
+                                <span class="font-medium">Podologie Praxis</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-500">Gesundheit</td>
+                        <td class="px-6 py-4">
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">Aktiv</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs">Öffentlich</span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="../podologie.html" class="text-cyan-600 hover:text-cyan-700 text-sm">Öffnen</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">👗</span>
+                                <span class="font-medium">Online Shop</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-500">E-Commerce</td>
+                        <td class="px-6 py-4">
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">Aktiv</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs">Login</span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="../shop.html" class="text-cyan-600 hover:text-cyan-700 text-sm">Öffnen</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">🥐</span>
+                                <span class="font-medium">Bäckerei</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-500">Gastronomie</td>
+                        <td class="px-6 py-4">
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">Aktiv</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs">Login</span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="../baecker.html" class="text-cyan-600 hover:text-cyan-700 text-sm">Öffnen</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">🍝</span>
+                                <span class="font-medium">Restaurant</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-500">Gastronomie</td>
+                        <td class="px-6 py-4">
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">Aktiv</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs">Login</span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="../restaurant.html" class="text-cyan-600 hover:text-cyan-700 text-sm">Öffnen</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">🏠</span>
+                                <span class="font-medium">Immobilien</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-500">Immobilien</td>
+                        <td class="px-6 py-4">
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">Aktiv</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs">Login</span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="../immobilien.html" class="text-cyan-600 hover:text-cyan-700 text-sm">Öffnen</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">💪</span>
+                                <span class="font-medium">Fitness Studio</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-500">Sport</td>
+                        <td class="px-6 py-4">
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">Aktiv</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs">Login</span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="../fitness.html" class="text-cyan-600 hover:text-cyan-700 text-sm">Öffnen</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="mt-8 grid md:grid-cols-2 gap-4">
+            <a href="../../index.html" class="bg-white rounded-xl p-5 hover:shadow-md transition flex items-center gap-4">
+                <div class="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center text-xl">🌐</div>
+                <div>
+                    <h3 class="font-medium">Website ansehen</h3>
+                    <p class="text-gray-500 text-sm">Öffentliche Seite</p>
+                </div>
+            </a>
+            <a href="../../karriere.html" class="bg-white rounded-xl p-5 hover:shadow-md transition flex items-center gap-4">
+                <div class="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center text-xl">💼</div>
+                <div>
+                    <h3 class="font-medium">Karriere-Seite</h3>
+                    <p class="text-gray-500 text-sm">Stellenangebote verwalten</p>
+                </div>
+            </a>
+        </div>
+    </main>
+
+    <script>
+        // Check authentication
+        if (localStorage.getItem('zakAdminAuth') !== 'true') {
+            window.location.href = 'login.html';
+        }
+
+        // Display admin name
+        document.getElementById('adminName').textContent = localStorage.getItem('zakAdminUser') || 'Admin';
+
+        function logout() {
+            localStorage.removeItem('zakAdminAuth');
+            localStorage.removeItem('zakAdminUser');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

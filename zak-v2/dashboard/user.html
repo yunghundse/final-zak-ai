@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mein Dashboard – ZAK AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar { width: 260px; }
+        .main-content { margin-left: 260px; }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Sidebar -->
+    <aside class="sidebar fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-40">
+        <div class="p-6">
+            <a href="../index.html" class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-xl flex items-center justify-center">
+                    <span class="text-xl">🤖</span>
+                </div>
+                <span class="font-bold text-gray-900">ZAK AI</span>
+            </a>
+        </div>
+
+        <nav class="px-4">
+            <p class="text-xs text-gray-400 uppercase tracking-wider px-3 mb-2">Übersicht</p>
+            <a href="user.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-cyan-50 text-cyan-700 font-medium mb-1">
+                <span>📊</span> Dashboard
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 mb-1">
+                <span>🤖</span> Meine Chatbots
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 mb-1">
+                <span>💬</span> Chat-Verlauf
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 mb-1">
+                <span>📈</span> Statistiken
+            </a>
+
+            <p class="text-xs text-gray-400 uppercase tracking-wider px-3 mb-2 mt-6">Einstellungen</p>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 mb-1">
+                <span>⚙️</span> Einstellungen
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 mb-1">
+                <span>💳</span> Abonnement
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 mb-1">
+                <span>❓</span> Hilfe
+            </a>
+        </nav>
+
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
+            <div class="flex items-center gap-3 px-3 py-2">
+                <div class="w-9 h-9 bg-cyan-100 rounded-full flex items-center justify-center">
+                    <span id="userInitial">U</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="userName" class="text-sm font-medium text-gray-900 truncate">Benutzer</p>
+                    <p id="userPlan" class="text-xs text-gray-500">Free Plan</p>
+                </div>
+                <button onclick="logout()" class="text-gray-400 hover:text-red-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content min-h-screen">
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-200 px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">Dashboard</h1>
+                    <p class="text-sm text-gray-500">Willkommen zurück!</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="statusBadge" class="flex items-center gap-2 bg-green-100 text-green-700 px-3 py-1.5 rounded-full text-sm">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        Online
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="p-8">
+            <!-- Stats -->
+            <div class="grid md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl p-6 border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-500 text-sm">Chatbot Status</span>
+                        <span class="text-2xl">🤖</span>
+                    </div>
+                    <p id="botStatus" class="text-2xl font-bold text-green-600">Aktiv</p>
+                    <p class="text-xs text-gray-400 mt-1">Seit 24 Stunden</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-500 text-sm">Chats heute</span>
+                        <span class="text-2xl">💬</span>
+                    </div>
+                    <p id="chatsToday" class="text-2xl font-bold text-gray-900">0</p>
+                    <p class="text-xs text-gray-400 mt-1">+0% vs. gestern</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-500 text-sm">Chats Monat</span>
+                        <span class="text-2xl">📊</span>
+                    </div>
+                    <p id="chatsMonth" class="text-2xl font-bold text-gray-900">0</p>
+                    <p id="chatLimit" class="text-xs text-gray-400 mt-1">von 500 genutzt</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-gray-500 text-sm">Erfolgsrate</span>
+                        <span class="text-2xl">✅</span>
+                    </div>
+                    <p id="successRate" class="text-2xl font-bold text-cyan-600">89%</p>
+                    <p class="text-xs text-gray-400 mt-1">Anfragen beantwortet</p>
+                </div>
+            </div>
+
+            <!-- Chatbot Overview -->
+            <div class="grid lg:grid-cols-3 gap-6 mb-8">
+                <div class="lg:col-span-2 bg-white rounded-xl border border-gray-100">
+                    <div class="p-6 border-b border-gray-100">
+                        <h2 class="font-semibold text-gray-900">Mein Chatbot</h2>
+                    </div>
+                    <div class="p-6">
+                        <div id="noBotMessage" class="text-center py-12">
+                            <div class="text-5xl mb-4">🤖</div>
+                            <h3 class="font-semibold text-gray-900 mb-2">Noch kein Chatbot aktiv</h3>
+                            <p class="text-gray-500 text-sm mb-4">Kontaktieren Sie uns, um Ihren individuellen Chatbot zu erstellen.</p>
+                            <a href="../index.html#preise" class="inline-block bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-2 rounded-full text-sm transition">
+                                Chatbot anfragen
+                            </a>
+                        </div>
+                        <div id="botInfo" class="hidden">
+                            <div class="flex items-center gap-4 mb-6">
+                                <div class="w-16 h-16 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-2xl flex items-center justify-center text-3xl">
+                                    🤖
+                                </div>
+                                <div>
+                                    <h3 id="botName" class="font-semibold text-lg">Mein Chatbot</h3>
+                                    <p id="botType" class="text-gray-500 text-sm">Kundenservice Bot</p>
+                                </div>
+                                <span class="ml-auto bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">Aktiv</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="bg-gray-50 rounded-lg p-4 text-center">
+                                    <p class="text-2xl font-bold text-gray-900">127</p>
+                                    <p class="text-xs text-gray-500">Gespräche</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 text-center">
+                                    <p class="text-2xl font-bold text-gray-900">89%</p>
+                                    <p class="text-xs text-gray-500">Zufriedenheit</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-lg p-4 text-center">
+                                    <p class="text-2xl font-bold text-gray-900">2.3s</p>
+                                    <p class="text-xs text-gray-500">Antwortzeit</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-xl border border-gray-100">
+                    <div class="p-6 border-b border-gray-100">
+                        <h2 class="font-semibold text-gray-900">Schnellaktionen</h2>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
+                            <div class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center">📊</div>
+                            <div>
+                                <p class="font-medium text-sm">Statistiken ansehen</p>
+                                <p class="text-xs text-gray-500">Detaillierte Auswertung</p>
+                            </div>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
+                            <div class="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">⚙️</div>
+                            <div>
+                                <p class="font-medium text-sm">Bot anpassen</p>
+                                <p class="text-xs text-gray-500">Antworten bearbeiten</p>
+                            </div>
+                        </a>
+                        <a href="#" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
+                            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">📞</div>
+                            <div>
+                                <p class="font-medium text-sm">Support kontaktieren</p>
+                                <p class="text-xs text-gray-500">Wir helfen gerne</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-white rounded-xl border border-gray-100">
+                <div class="p-6 border-b border-gray-100">
+                    <h2 class="font-semibold text-gray-900">Letzte Aktivitäten</h2>
+                </div>
+                <div class="divide-y divide-gray-50">
+                    <div class="p-4 flex items-center gap-4">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">💬</div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium">Neue Chat-Anfrage beantwortet</p>
+                            <p class="text-xs text-gray-500">Vor 5 Minuten</p>
+                        </div>
+                    </div>
+                    <div class="p-4 flex items-center gap-4">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">📅</div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium">Termin über Bot gebucht</p>
+                            <p class="text-xs text-gray-500">Vor 2 Stunden</p>
+                        </div>
+                    </div>
+                    <div class="p-4 flex items-center gap-4">
+                        <div class="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">✅</div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium">Chatbot erfolgreich aktualisiert</p>
+                            <p class="text-xs text-gray-500">Gestern, 14:30</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Check auth state
+        auth.onAuthStateChanged(async function(user) {
+            if (!user) {
+                window.location.href = '../index.html';
+                return;
+            }
+
+            // Update UI with user info
+            document.getElementById('userName').textContent = user.displayName || user.email;
+            document.getElementById('userInitial').textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+
+            // Get user data from Firestore
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    document.getElementById('userPlan').textContent = userData.plan === 'free' ? 'Free Plan' : userData.plan + ' Plan';
+
+                    // If user has a bot, show bot info
+                    if (userData.hasBot) {
+                        document.getElementById('noBotMessage').classList.add('hidden');
+                        document.getElementById('botInfo').classList.remove('hidden');
+                        document.getElementById('botName').textContent = userData.botName || 'Mein Chatbot';
+                    }
+
+                    // Update stats
+                    document.getElementById('chatsToday').textContent = userData.chatsToday || 0;
+                    document.getElementById('chatsMonth').textContent = userData.chatsMonth || 0;
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
+        });
+
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = '../index.html';
+            });
+        }
+    </script>
+</body>
+</html>

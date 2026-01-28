@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZAK AI – Digitale Mitarbeiter für Ihr Unternehmen</title>
+    <meta name="description" content="Individuelle KI-Chatbots für Ihr Unternehmen. Professionelle Entwicklung ab 500€.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .chat-container { position: fixed; bottom: 24px; right: 24px; z-index: 1000; }
+        .chat-bubble { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #06B6D4, #0891B2); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 20px rgba(6, 182, 212, 0.4); transition: transform 0.3s; }
+        .chat-bubble:hover { transform: scale(1.1); }
+        .chat-window { position: absolute; bottom: 76px; right: 0; width: 380px; height: 500px; background: white; border-radius: 20px; box-shadow: 0 10px 50px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; }
+        .chat-window.open { display: flex; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-header { background: linear-gradient(135deg, #06B6D4, #0891B2); color: white; padding: 16px; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 16px; background: #f8fafc; }
+        .message { margin-bottom: 12px; max-width: 85%; }
+        .message.bot { background: white; padding: 12px 16px; border-radius: 16px 16px 16px 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .message.user { background: linear-gradient(135deg, #06B6D4, #0891B2); color: white; padding: 12px 16px; border-radius: 16px 16px 4px 16px; margin-left: auto; }
+        .quick-replies { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .quick-reply { background: #ecfeff; border: 1px solid #06B6D4; color: #0891B2; padding: 6px 14px; border-radius: 16px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .quick-reply:hover { background: #06B6D4; color: white; }
+        .chat-input { display: flex; padding: 12px; border-top: 1px solid #e5e7eb; background: white; }
+        .chat-input input { flex: 1; border: 1px solid #e5e7eb; border-radius: 20px; padding: 10px 16px; outline: none; font-size: 14px; }
+        .chat-input input:focus { border-color: #06B6D4; }
+        .chat-input button { background: linear-gradient(135deg, #06B6D4, #0891B2); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; margin-left: 8px; cursor: pointer; }
+        .typing-indicator { display: flex; gap: 4px; padding: 12px 16px; background: white; border-radius: 16px; width: fit-content; }
+        .typing-indicator span { width: 6px; height: 6px; background: #06B6D4; border-radius: 50%; animation: bounce 1.4s infinite; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+        .modal.open { display: flex; }
+        .modal-content { background: white; border-radius: 20px; padding: 32px; max-width: 400px; width: 90%; }
+    </style>
+</head>
+<body class="bg-white text-gray-900">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-xl flex items-center justify-center">
+                    <span class="text-xl">🤖</span>
+                </div>
+                <span class="text-xl font-bold text-gray-900">ZAK <span class="text-cyan-500">AI</span></span>
+            </a>
+            <div class="hidden md:flex items-center gap-6">
+                <a href="#features" class="text-sm text-gray-600 hover:text-cyan-600">Features</a>
+                <a href="#demo" class="text-sm text-gray-600 hover:text-cyan-600">Demo</a>
+                <a href="#preise" class="text-sm text-gray-600 hover:text-cyan-600">Preise</a>
+                <a href="pages/ueber-uns.html" class="text-sm text-gray-600 hover:text-cyan-600">Über uns</a>
+                <a href="karriere.html" class="text-sm text-gray-600 hover:text-cyan-600">Karriere</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="openAuthModal('login')" id="loginBtn" class="text-sm text-gray-600 hover:text-cyan-600">Anmelden</button>
+                <button onclick="openAuthModal('register')" id="registerBtn" class="bg-cyan-500 hover:bg-cyan-600 text-white px-5 py-2 rounded-full text-sm font-medium transition">
+                    Registrieren
+                </button>
+                <div id="userMenu" class="hidden items-center gap-2">
+                    <a href="dashboard/user.html" class="text-sm text-cyan-600 hover:text-cyan-700 font-medium">Mein Dashboard</a>
+                    <button onclick="logout()" class="text-sm text-red-500 hover:text-red-600 ml-2">Abmelden</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-28 pb-16 bg-gradient-to-br from-gray-50 to-white">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="max-w-3xl mx-auto text-center">
+                <div class="inline-flex items-center gap-2 bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
+                    <span class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+                    Nur noch 3 Plätze im Januar verfügbar!
+                </div>
+
+                <h1 class="text-4xl md:text-5xl font-bold tracking-tight leading-tight mb-6">
+                    Digitale Mitarbeiter<br>
+                    <span class="text-cyan-500">für Ihr Business</span>
+                </h1>
+                <p class="text-lg text-gray-600 mb-8 max-w-xl mx-auto">
+                    Individuelle KI-Chatbots für Ihre Website. Professionelle Entwicklung, faire Preise.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+                    <a href="#preise" class="bg-cyan-500 hover:bg-cyan-600 text-white px-8 py-3 rounded-full font-medium transition">
+                        Angebot anfragen
+                    </a>
+                    <a href="#demo" class="border border-gray-300 hover:border-cyan-500 px-8 py-3 rounded-full font-medium transition hover:text-cyan-600">
+                        Demo ansehen
+                    </a>
+                </div>
+
+                <div class="flex justify-center gap-12 pt-8 border-t border-gray-100">
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-gray-900">50+</p>
+                        <p class="text-gray-500 text-sm">Projekte</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-gray-900">24/7</p>
+                        <p class="text-gray-500 text-sm">Verfügbar</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-gray-900">100%</p>
+                        <p class="text-gray-500 text-sm">Individuell</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Capacity Banner -->
+    <section class="py-6 bg-gradient-to-r from-cyan-500 to-blue-600">
+        <div class="max-w-4xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-white">
+            <div>
+                <h3 class="font-semibold">Aktuelle Kapazität: 17/20 Plätze belegt</h3>
+                <p class="text-cyan-100 text-sm">Begrenzte Verfügbarkeit für individuelle Projekte</p>
+            </div>
+            <a href="#preise" class="bg-white text-cyan-600 px-6 py-2 rounded-full font-medium hover:bg-cyan-50 transition">
+                Platz sichern
+            </a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-3">Was wir bieten</h2>
+                <p class="text-gray-600">Individuelle Chatbot-Entwicklung für Ihr Unternehmen</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-gray-50 rounded-2xl p-6 hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center text-xl mb-4">💬</div>
+                    <h3 class="font-semibold mb-2">24/7 Support</h3>
+                    <p class="text-gray-600 text-sm">Ihr Bot antwortet rund um die Uhr.</p>
+                </div>
+                <div class="bg-gray-50 rounded-2xl p-6 hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-xl mb-4">🎨</div>
+                    <h3 class="font-semibold mb-2">Individuelles Design</h3>
+                    <p class="text-gray-600 text-sm">Perfekt an Ihre Marke angepasst.</p>
+                </div>
+                <div class="bg-gray-50 rounded-2xl p-6 hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-violet-500 rounded-xl flex items-center justify-center text-xl mb-4">📅</div>
+                    <h3 class="font-semibold mb-2">Terminbuchung</h3>
+                    <p class="text-gray-600 text-sm">Automatische Terminvergabe möglich.</p>
+                </div>
+                <div class="bg-gray-50 rounded-2xl p-6 hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center text-xl mb-4">🔗</div>
+                    <h3 class="font-semibold mb-2">Integrationen</h3>
+                    <p class="text-gray-600 text-sm">CRM, E-Mail, Kalender & mehr.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-3">Live Demo</h2>
+                <p class="text-gray-600">Testen Sie unsere Chatbots in Aktion</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <a href="demo/podologie.html" class="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition group">
+                    <div class="h-28 bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                        <span class="text-4xl">🦶</span>
+                    </div>
+                    <div class="p-5">
+                        <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">Kostenlos testen</span>
+                        <h3 class="font-semibold mt-2 group-hover:text-cyan-600">Podologie Praxis</h3>
+                        <p class="text-gray-500 text-sm">Terminbuchung & Beratung</p>
+                    </div>
+                </a>
+
+                <div class="bg-white rounded-2xl overflow-hidden opacity-60 cursor-pointer" onclick="openAuthModal('login')">
+                    <div class="h-28 bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center relative">
+                        <span class="text-4xl">👗</span>
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <span class="text-white text-xl">🔒</span>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">Login erforderlich</span>
+                        <h3 class="font-semibold mt-2">Online Shop</h3>
+                        <p class="text-gray-500 text-sm">Produktberatung & Support</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl overflow-hidden opacity-60 cursor-pointer" onclick="openAuthModal('login')">
+                    <div class="h-28 bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center relative">
+                        <span class="text-4xl">🥐</span>
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <span class="text-white text-xl">🔒</span>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">Login erforderlich</span>
+                        <h3 class="font-semibold mt-2">Bäckerei</h3>
+                        <p class="text-gray-500 text-sm">Vorbestellung & Info</p>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center text-gray-500 text-sm mt-6">
+                Registrieren Sie sich kostenlos, um alle Demos freizuschalten
+            </p>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="preise" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-3">Unsere Preise</h2>
+                <p class="text-gray-600">Einmalige Entwicklungskosten – kein Abo</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                <!-- Standard -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-200">
+                    <div class="mb-4">
+                        <span class="text-xs text-gray-500 uppercase tracking-wide">Einstieg</span>
+                        <h3 class="text-xl font-bold mt-1">Standard</h3>
+                    </div>
+                    <div class="mb-4">
+                        <span class="text-3xl font-bold">500 - 800€</span>
+                        <p class="text-gray-500 text-sm">einmalig</p>
+                    </div>
+                    <ul class="space-y-2 mb-6 text-sm">
+                        <li class="flex items-center gap-2"><span class="text-cyan-500">✓</span> 1 Chatbot</li>
+                        <li class="flex items-center gap-2"><span class="text-cyan-500">✓</span> Basis-Funktionen</li>
+                        <li class="flex items-center gap-2"><span class="text-cyan-500">✓</span> E-Mail-Benachrichtigung</li>
+                        <li class="flex items-center gap-2"><span class="text-cyan-500">✓</span> 30 Tage Support</li>
+                    </ul>
+                    <a href="mailto:kontakt@zak-ai.de?subject=Anfrage Standard Chatbot" class="block w-full bg-gray-100 hover:bg-gray-200 py-3 rounded-full font-medium transition text-center">
+                        Anfragen
+                    </a>
+                </div>
+
+                <!-- Professional -->
+                <div class="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl p-6 text-white relative">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 px-3 py-1 rounded-full text-xs font-bold">
+                        EMPFOHLEN
+                    </div>
+                    <div class="mb-4">
+                        <span class="text-xs text-cyan-100 uppercase tracking-wide">Business</span>
+                        <h3 class="text-xl font-bold mt-1">Professional</h3>
+                    </div>
+                    <div class="mb-4">
+                        <span class="text-3xl font-bold">800 - 1.200€</span>
+                        <p class="text-cyan-100 text-sm">einmalig</p>
+                    </div>
+                    <ul class="space-y-2 mb-6 text-sm">
+                        <li class="flex items-center gap-2"><span>✓</span> 1 Chatbot (erweitert)</li>
+                        <li class="flex items-center gap-2"><span>✓</span> Terminbuchung</li>
+                        <li class="flex items-center gap-2"><span>✓</span> CRM-Integration</li>
+                        <li class="flex items-center gap-2"><span>✓</span> Analytics Dashboard</li>
+                        <li class="flex items-center gap-2"><span>✓</span> 90 Tage Support</li>
+                    </ul>
+                    <a href="mailto:kontakt@zak-ai.de?subject=Anfrage Professional Chatbot" class="block w-full bg-white text-cyan-600 py-3 rounded-full font-medium hover:bg-cyan-50 transition text-center">
+                        Anfragen
+                    </a>
+                </div>
+
+                <!-- Individual -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-200">
+                    <div class="mb-4">
+                        <span class="text-xs text-gray-500 uppercase tracking-wide">Enterprise</span>
+                        <h3 class="text-xl font-bold mt-1">Individuell</h3>
+                    </div>
+                    <div class="mb-4">
+                        <span class="text-3xl font-bold">Auf Anfrage</span>
+                        <p class="text-gray-500 text-sm">nach Aufwand</p>
+                    </div>
+                    <ul class="space-y-2 mb-6 text-sm">
+                        <li class="flex items-center gap-2"><span class="text-cyan-500">✓</span> Maßgeschneiderte Lösung</li>
+                        <li class="flex items-center gap-2"><span class="text-cyan-500">✓</span> Mehrere Chatbots</li>
+                        <li class="flex items-center gap-2"><span class="text-cyan-500">✓</span> Komplexe Integrationen</li>
+                        <li class="flex items-center gap-2"><span class="text-cyan-500">✓</span> Persönliche Beratung</li>
+                        <li class="flex items-center gap-2"><span class="text-cyan-500">✓</span> Langzeit-Support</li>
+                    </ul>
+                    <a href="mailto:kontakt@zak-ai.de?subject=Anfrage Individuelles Projekt" class="block w-full bg-gray-100 hover:bg-gray-200 py-3 rounded-full font-medium transition text-center">
+                        Kontakt aufnehmen
+                    </a>
+                </div>
+            </div>
+
+            <div class="text-center mt-8 p-6 bg-gray-50 rounded-xl max-w-2xl mx-auto">
+                <p class="text-gray-600 text-sm">
+                    <strong>💡 Nur einen Bot?</strong> Kein Problem! Wir entwickeln auch einzelne Chatbots ab 500€.
+                    <br>Schreiben Sie uns einfach Ihre Anforderungen.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter Section -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-2xl mx-auto px-6 text-center">
+            <h2 class="text-2xl font-bold mb-3">Newsletter</h2>
+            <p class="text-gray-600 mb-6">Erhalten Sie Updates zu neuen Features und KI-Tipps</p>
+            <form id="newsletterForm" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                <input type="email" id="newsletterEmail" placeholder="Ihre E-Mail-Adresse" required
+                    class="flex-1 px-4 py-3 rounded-full border border-gray-300 focus:border-cyan-500 focus:outline-none">
+                <button type="submit" class="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-3 rounded-full font-medium transition">
+                    Abonnieren
+                </button>
+            </form>
+            <p id="newsletterSuccess" class="hidden text-green-600 text-sm mt-4">✓ Erfolgreich angemeldet!</p>
+            <p class="text-gray-400 text-xs mt-4">Kein Spam. Jederzeit abmeldbar.</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center">🤖</div>
+                        <span class="font-bold">ZAK AI</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">Digitale Mitarbeiter für Ihr Unternehmen.</p>
+                </div>
+                <div>
+                    <h4 class="font-medium mb-3">Produkt</h4>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li><a href="#features" class="hover:text-white">Features</a></li>
+                        <li><a href="#preise" class="hover:text-white">Preise</a></li>
+                        <li><a href="#demo" class="hover:text-white">Demo</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-medium mb-3">Unternehmen</h4>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li><a href="pages/ueber-uns.html" class="hover:text-white">Über uns</a></li>
+                        <li><a href="karriere.html" class="hover:text-white">Karriere</a></li>
+                        <li><a href="dashboard/admin.html" class="hover:text-white">Admin</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-medium mb-3">Rechtliches</h4>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li><a href="pages/impressum.html" class="hover:text-white">Impressum</a></li>
+                        <li><a href="pages/datenschutz.html" class="hover:text-white">Datenschutz</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="pt-8 border-t border-gray-800 text-center text-gray-500 text-sm">
+                © 2026 ZAK AI – Jan Hundsdorff, Winterlingen
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="authTitle" class="text-xl font-bold">Anmelden</h3>
+                <button onclick="closeAuthModal()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+            </div>
+
+            <div class="space-y-3 mb-6">
+                <button onclick="signInWithGoogle()" class="w-full flex items-center justify-center gap-3 border border-gray-300 py-3 rounded-full hover:bg-gray-50 transition">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Mit Google anmelden
+                </button>
+                <button onclick="signInWithApple()" class="w-full flex items-center justify-center gap-3 bg-black text-white py-3 rounded-full hover:bg-gray-800 transition">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+                    Mit Apple anmelden
+                </button>
+            </div>
+
+            <div class="relative mb-6">
+                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+                <div class="relative flex justify-center"><span class="bg-white px-4 text-gray-400 text-sm">oder</span></div>
+            </div>
+
+            <form id="authForm" onsubmit="handleEmailAuth(event)">
+                <div class="space-y-4">
+                    <input type="email" id="authEmail" placeholder="E-Mail-Adresse" required
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-cyan-500 focus:outline-none">
+                    <input type="password" id="authPassword" placeholder="Passwort" required
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-cyan-500 focus:outline-none">
+                    <div id="registerFields" class="hidden space-y-4">
+                        <input type="text" id="authName" placeholder="Vollständiger Name"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-cyan-500 focus:outline-none">
+                        <input type="text" id="authCompany" placeholder="Firma (optional)"
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-cyan-500 focus:outline-none">
+                    </div>
+                    <button type="submit" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-3 rounded-full font-medium transition">
+                        <span id="authBtnText">Anmelden</span>
+                    </button>
+                </div>
+            </form>
+
+            <p class="text-center text-sm text-gray-500 mt-4" id="authSwitch">
+                Noch kein Konto? <button onclick="switchAuthMode()" class="text-cyan-600 hover:underline">Registrieren</button>
+            </p>
+        </div>
+    </div>
+
+    <!-- Chat Widget -->
+    <div class="chat-container">
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-header">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl">🤖</div>
+                    <div>
+                        <div class="font-semibold">NEXO Assistent</div>
+                        <div class="text-xs text-cyan-100">Online</div>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="absolute top-4 right-4 text-white/80 hover:text-white">&times;</button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <p>Hallo! 👋 Wie kann ich Ihnen helfen?</p>
+                    <div class="quick-replies">
+                        <button class="quick-reply" onclick="sendQuickReply('Preise')">Preise</button>
+                        <button class="quick-reply" onclick="sendQuickReply('Kontakt')">Kontakt</button>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="Ihre Frage..." onkeypress="if(event.key==='Enter')sendMessage()">
+                <button onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+        <div class="chat-bubble" onclick="toggleChat()">
+            <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Config - REPLACE WITH YOUR CONFIG
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentAuthMode = 'login';
+
+        auth.onAuthStateChanged(function(user) {
+            if (user) {
+                document.getElementById('loginBtn').classList.add('hidden');
+                document.getElementById('registerBtn').classList.add('hidden');
+                document.getElementById('userMenu').classList.remove('hidden');
+                document.getElementById('userMenu').classList.add('flex');
+            } else {
+                document.getElementById('loginBtn').classList.remove('hidden');
+                document.getElementById('registerBtn').classList.remove('hidden');
+                document.getElementById('userMenu').classList.add('hidden');
+            }
+        });
+
+        function openAuthModal(mode) {
+            currentAuthMode = mode;
+            document.getElementById('authModal').classList.add('open');
+            updateAuthUI();
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.remove('open');
+        }
+
+        function switchAuthMode() {
+            currentAuthMode = currentAuthMode === 'login' ? 'register' : 'login';
+            updateAuthUI();
+        }
+
+        function updateAuthUI() {
+            const isLogin = currentAuthMode === 'login';
+            document.getElementById('authTitle').textContent = isLogin ? 'Anmelden' : 'Registrieren';
+            document.getElementById('authBtnText').textContent = isLogin ? 'Anmelden' : 'Konto erstellen';
+            document.getElementById('registerFields').classList.toggle('hidden', isLogin);
+            document.getElementById('authSwitch').innerHTML = isLogin
+                ? 'Noch kein Konto? <button onclick="switchAuthMode()" class="text-cyan-600 hover:underline">Registrieren</button>'
+                : 'Bereits registriert? <button onclick="switchAuthMode()" class="text-cyan-600 hover:underline">Anmelden</button>';
+        }
+
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).then(result => {
+                if (result.additionalUserInfo.isNewUser) saveUserToDatabase(result.user);
+                closeAuthModal();
+                window.location.href = 'dashboard/user.html';
+            }).catch(error => alert('Fehler: ' + error.message));
+        }
+
+        function signInWithApple() {
+            const provider = new firebase.auth.OAuthProvider('apple.com');
+            auth.signInWithPopup(provider).then(result => {
+                if (result.additionalUserInfo.isNewUser) saveUserToDatabase(result.user);
+                closeAuthModal();
+                window.location.href = 'dashboard/user.html';
+            }).catch(error => alert('Fehler: ' + error.message));
+        }
+
+        function handleEmailAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+
+            if (currentAuthMode === 'login') {
+                auth.signInWithEmailAndPassword(email, password).then(() => {
+                    closeAuthModal();
+                    window.location.href = 'dashboard/user.html';
+                }).catch(error => alert('Fehler: ' + error.message));
+            } else {
+                auth.createUserWithEmailAndPassword(email, password).then(result => {
+                    const name = document.getElementById('authName').value;
+                    result.user.updateProfile({ displayName: name });
+                    saveUserToDatabase(result.user, {
+                        name: name,
+                        company: document.getElementById('authCompany').value
+                    });
+                    closeAuthModal();
+                    window.location.href = 'dashboard/user.html';
+                }).catch(error => alert('Fehler: ' + error.message));
+            }
+        }
+
+        function saveUserToDatabase(user, additionalData) {
+            db.collection('users').doc(user.uid).set({
+                email: user.email,
+                displayName: user.displayName || additionalData?.name || '',
+                company: additionalData?.company || '',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                plan: 'free',
+                hasBot: false
+            }, { merge: true });
+        }
+
+        function logout() {
+            auth.signOut().then(() => window.location.reload());
+        }
+
+        // Newsletter
+        document.getElementById('newsletterForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('newsletterEmail').value;
+            db.collection('newsletter').add({
+                email: email,
+                subscribedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                document.getElementById('newsletterEmail').value = '';
+                document.getElementById('newsletterSuccess').classList.remove('hidden');
+                setTimeout(() => document.getElementById('newsletterSuccess').classList.add('hidden'), 3000);
+            }).catch(error => alert('Fehler: ' + error.message));
+        });
+
+        // Chat
+        function toggleChat() { document.getElementById('chatWindow').classList.toggle('open'); }
+
+        const responses = {
+            preise: `💰 Unsere Preise:
+
+• Standard: 500-800€ (einmalig)
+• Professional: 800-1.200€ (einmalig)
+• Individuell: Auf Anfrage
+
+Alle Preise sind einmalige Entwicklungskosten.`,
+            kontakt: `📞 Kontakt:
+
+E-Mail: kontakt@zak-ai.de
+Telefon: Auf Anfrage
+
+Oder schreiben Sie mir direkt hier!`,
+            standard: `Wie kann ich Ihnen helfen?
+
+Fragen Sie mich zu:
+• Preisen
+• Funktionen
+• Kontakt`
+        };
+
+        function getResponse(input) {
+            const l = input.toLowerCase();
+            if (l.includes('preis') || l.includes('kost')) return responses.preise;
+            if (l.includes('kontakt') || l.includes('telefon') || l.includes('email')) return responses.kontakt;
+            return responses.standard;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            addMessage(msg, 'user');
+            input.value = '';
+            setTimeout(() => addMessage(getResponse(msg), 'bot'), 800);
+        }
+
+        function sendQuickReply(text) {
+            addMessage(text, 'user');
+            setTimeout(() => addMessage(getResponse(text), 'bot'), 600);
+        }
+
+        function addMessage(text, type) {
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'message ' + type;
+            div.innerHTML = text.replace(/\n/g, '<br>');
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        setTimeout(() => { if (!document.getElementById('chatWindow').classList.contains('open')) toggleChat(); }, 5000);
+    </script>
+</body>
+</html>

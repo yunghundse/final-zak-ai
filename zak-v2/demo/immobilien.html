@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeFinder Immobilien – Ihr Zuhause wartet</title>
+    <meta name="description" content="Premium Immobilien in Berlin. Kaufen, Mieten, Investieren.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        .chat-container { position: fixed; bottom: 24px; right: 24px; z-index: 1000; }
+        .chat-bubble { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #0EA5E9, #0284C7); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 20px rgba(14, 165, 233, 0.4); transition: transform 0.3s, box-shadow 0.3s; }
+        .chat-bubble:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(14, 165, 233, 0.5); }
+        .chat-window { position: absolute; bottom: 80px; right: 0; width: 380px; height: 520px; background: white; border-radius: 20px; box-shadow: 0 10px 50px rgba(0,0,0,0.2); display: none; flex-direction: column; overflow: hidden; }
+        .chat-window.open { display: flex; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-header { background: linear-gradient(135deg, #0EA5E9, #0284C7); color: white; padding: 20px; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 20px; background: #f0f9ff; }
+        .message { margin-bottom: 16px; max-width: 85%; }
+        .message.bot { background: white; padding: 12px 16px; border-radius: 18px 18px 18px 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .message.user { background: linear-gradient(135deg, #0EA5E9, #0284C7); color: white; padding: 12px 16px; border-radius: 18px 18px 4px 18px; margin-left: auto; }
+        .quick-replies { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .quick-reply { background: #e0f2fe; border: 1px solid #0EA5E9; color: #0284C7; padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .quick-reply:hover { background: #0EA5E9; color: white; }
+        .chat-input { display: flex; padding: 16px; border-top: 1px solid #e5e7eb; background: white; }
+        .chat-input input { flex: 1; border: 1px solid #d1d5db; border-radius: 24px; padding: 12px 20px; outline: none; }
+        .chat-input input:focus { border-color: #0EA5E9; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1); }
+        .chat-input button { background: linear-gradient(135deg, #0EA5E9, #0284C7); color: white; border: none; border-radius: 50%; width: 44px; height: 44px; margin-left: 10px; cursor: pointer; }
+        .typing-indicator { display: flex; gap: 4px; padding: 12px 16px; background: white; border-radius: 18px; width: fit-content; }
+        .typing-indicator span { width: 8px; height: 8px; background: #0EA5E9; border-radius: 50%; animation: bounce 1.4s infinite; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
+        .property-card { transition: transform 0.3s, box-shadow 0.3s; }
+        .property-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="font-['Inter'] bg-white text-gray-900">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="#" class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl flex items-center justify-center">
+                    <span class="text-2xl">🏠</span>
+                </div>
+                <div>
+                    <span class="text-xl font-bold text-gray-900">HomeFinder</span>
+                    <span class="block text-sm text-sky-600 font-medium">Immobilien</span>
+                </div>
+            </a>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#kaufen" class="text-sm font-medium text-gray-600 hover:text-sky-600">Kaufen</a>
+                <a href="#mieten" class="text-sm font-medium text-gray-600 hover:text-sky-600">Mieten</a>
+                <a href="#verkaufen" class="text-sm font-medium text-gray-600 hover:text-sky-600">Verkaufen</a>
+                <a href="#kontakt" class="text-sm font-medium text-gray-600 hover:text-sky-600">Kontakt</a>
+            </div>
+            <button onclick="toggleChat()" class="bg-sky-500 hover:bg-sky-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition">🔑 Beratung</button>
+        </div>
+    </nav>
+
+    <section class="pt-28 pb-20 bg-gradient-to-br from-sky-50 via-white to-blue-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="inline-flex items-center gap-2 bg-sky-100 text-sky-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
+                        <span class="w-2 h-2 bg-sky-500 rounded-full animate-pulse"></span>
+                        250+ neue Objekte diese Woche
+                    </div>
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight mb-6">
+                        Finden Sie Ihr<br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-blue-500">Traumzuhause.</span>
+                    </h1>
+                    <p class="text-xl text-gray-600 mb-8 leading-relaxed">
+                        Premium Immobilien in Berlin und Umgebung.
+                        Persönliche Beratung, exklusive Objekte, faire Konditionen.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button onclick="toggleChat()" class="bg-sky-500 hover:bg-sky-600 text-white px-8 py-4 rounded-full text-lg font-semibold transition shadow-lg shadow-sky-500/30">Kostenlose Beratung →</button>
+                        <a href="tel:+4930111222" class="border-2 border-gray-300 hover:border-sky-500 px-8 py-4 rounded-full text-lg font-semibold transition text-center">📞 030 - 111 222</a>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="bg-gradient-to-br from-sky-400 to-blue-500 rounded-3xl p-8 text-white">
+                        <h3 class="text-2xl font-bold mb-4">📊 Markt-Statistik Berlin</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between"><span>Ø Kaufpreis/m²</span><span class="font-semibold">5.200€</span></div>
+                            <div class="flex justify-between"><span>Ø Miete/m²</span><span class="font-semibold">14,50€</span></div>
+                            <div class="flex justify-between"><span>Aktive Angebote</span><span class="font-semibold">1.850+</span></div>
+                        </div>
+                        <div class="mt-6 pt-6 border-t border-sky-300/30">
+                            <p class="text-sky-100">📍 Hauptsitz: Kurfürstendamm 50, Berlin</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="objekte" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-black mb-4">Aktuelle Angebote</h2>
+                <p class="text-xl text-gray-600">Exklusive Objekte für Sie</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="property-card bg-gray-50 rounded-2xl overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-sky-200 to-sky-300 flex items-center justify-center text-6xl">🏢</div>
+                    <div class="p-6">
+                        <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">ZUM VERKAUF</span>
+                        <h3 class="font-bold mt-3 mb-2">Penthouse Mitte</h3>
+                        <p class="text-gray-600 text-sm mb-3">4 Zimmer • 145m² • Dachterrasse</p>
+                        <p class="text-sky-600 font-bold text-xl">890.000€</p>
+                    </div>
+                </div>
+                <div class="property-card bg-gray-50 rounded-2xl overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-emerald-200 to-emerald-300 flex items-center justify-center text-6xl">🏡</div>
+                    <div class="p-6">
+                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">ZUR MIETE</span>
+                        <h3 class="font-bold mt-3 mb-2">Altbau Prenzlauer Berg</h3>
+                        <p class="text-gray-600 text-sm mb-3">3 Zimmer • 95m² • Balkon</p>
+                        <p class="text-sky-600 font-bold text-xl">1.850€/Monat</p>
+                    </div>
+                </div>
+                <div class="property-card bg-gray-50 rounded-2xl overflow-hidden">
+                    <div class="h-48 bg-gradient-to-br from-amber-200 to-amber-300 flex items-center justify-center text-6xl">🏘️</div>
+                    <div class="p-6">
+                        <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">ZUM VERKAUF</span>
+                        <h3 class="font-bold mt-3 mb-2">Einfamilienhaus Zehlendorf</h3>
+                        <p class="text-gray-600 text-sm mb-3">5 Zimmer • 180m² • Garten</p>
+                        <p class="text-sky-600 font-bold text-xl">1.250.000€</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-16 bg-gradient-to-r from-sky-500 to-blue-500">
+        <div class="max-w-4xl mx-auto px-6 text-center text-white">
+            <h2 class="text-3xl md:text-4xl font-black mb-4">🏠 Finden Sie Ihre Traumimmobilie!</h2>
+            <p class="text-xl text-sky-100 mb-8">Unser KI-Berater hilft Ihnen 24/7 bei der Suche. Persönlich, schnell, kostenlos.</p>
+            <button onclick="toggleChat()" class="bg-white text-sky-600 px-8 py-4 rounded-full text-lg font-bold hover:bg-sky-50 transition shadow-xl">🔑 Jetzt beraten lassen</button>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-sky-500 rounded-xl flex items-center justify-center">🏠</div>
+                    <span class="font-bold">HomeFinder Immobilien</span>
+                </div>
+                <p class="text-gray-400 text-sm">Diese Demo-Seite wird powered by <a href="../../index.html" class="text-sky-400 hover:underline">ZAK AI NEXO</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="chat-container">
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-header">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">🏠</div>
+                    <div>
+                        <div class="font-bold">Immobilien-Berater</div>
+                        <div class="text-sm text-sky-100">Powered by NEXO • Online</div>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="absolute top-4 right-4 text-white/80 hover:text-white">✕</button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <p>Guten Tag! 👋 Willkommen bei HomeFinder!</p>
+                    <p class="mt-2">Suchen Sie eine Immobilie zum Kaufen, Mieten oder möchten Sie verkaufen?</p>
+                    <div class="quick-replies">
+                        <button class="quick-reply" onclick="sendQuickReply('Wohnung kaufen')">🏢 Kaufen</button>
+                        <button class="quick-reply" onclick="sendQuickReply('Wohnung mieten')">🔑 Mieten</button>
+                        <button class="quick-reply" onclick="sendQuickReply('Immobilie verkaufen')">💰 Verkaufen</button>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="Ihre Anfrage..." onkeypress="if(event.key==='Enter')sendMessage()">
+                <button onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+        <div class="chat-bubble" onclick="toggleChat()">
+            <svg width="28" height="28" fill="white" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+        </div>
+    </div>
+
+    <script>
+        function toggleChat() {
+            document.getElementById('chatWindow').classList.toggle('open');
+        }
+
+        const responses = {
+            kaufen: `🏢 Immobilie kaufen:
+
+Was suchen Sie?
+• Wohnung oder Haus?
+• Welcher Bezirk/Lage?
+• Budget (z.B. bis 500.000€)?
+• Mindestgröße in m²?
+
+Aktuelle Angebote:
+• 250+ Wohnungen
+• 85+ Häuser
+• 40+ Neubauprojekte
+
+Nennen Sie mir Ihre Wünsche!`,
+            mieten: `🔑 Immobilie mieten:
+
+Welche Kriterien haben Sie?
+• Zimmeranzahl?
+• Maximale Kaltmiete?
+• Bevorzugte Bezirke?
+• Einzugstermin?
+
+Tipp: Mit einem Suchprofil informieren wir Sie sofort über passende Objekte!
+
+Was ist Ihnen wichtig?`,
+            verkaufen: `💰 Immobilie verkaufen:
+
+Wir helfen Ihnen zum besten Preis!
+
+Unser Service:
+• Kostenlose Marktwertanalyse
+• Professionelle Fotos & Exposé
+• Vermarktung auf 20+ Portalen
+• Begleitung bis zum Notar
+
+Provision: 3,57% (nur bei Erfolg)
+
+Möchten Sie eine Bewertung?`,
+            besichtigung: `👀 Besichtigungstermin:
+
+Gerne vereinbare ich einen Termin!
+
+Bitte nennen Sie mir:
+• Welches Objekt interessiert Sie?
+• Wunschtermine (Tag + Uhrzeit)
+• Ihre Kontaktdaten
+
+Wir melden uns innerhalb von 2 Stunden!`,
+            finanzierung: `💳 Finanzierung:
+
+Wir vermitteln günstige Konditionen!
+
+Aktuell (Stand: Jan 2026):
+• Zinsen ab 3,2% p.a.
+• Bis 100% Finanzierung möglich
+• Sondertilgung inklusive
+
+Kostenlose Beratung mit unseren Partnern!`,
+            standard: `Gerne helfe ich Ihnen! 🏠
+
+Ich kann Sie unterstützen bei:
+• Kaufen: Wohnungen, Häuser, Gewerbe
+• Mieten: Alle Preisklassen
+• Verkaufen: Kostenlose Bewertung
+• Finanzierung: Günstige Konditionen
+
+Was ist Ihr Anliegen?`
+        };
+
+        function getResponse(input) {
+            const lower = input.toLowerCase();
+            if (lower.includes('kauf') || lower.includes('erwerb') || lower.includes('eigentum')) return responses.kaufen;
+            if (lower.includes('miet') || lower.includes('wohnung suche') || lower.includes('zur miete')) return responses.mieten;
+            if (lower.includes('verkauf') || lower.includes('bewert') || lower.includes('wert')) return responses.verkaufen;
+            if (lower.includes('besichtig') || lower.includes('termin') || lower.includes('ansehen')) return responses.besichtigung;
+            if (lower.includes('finanz') || lower.includes('kredit') || lower.includes('zins') || lower.includes('hypothek')) return responses.finanzierung;
+            return responses.standard;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            addMessage(msg, 'user');
+            input.value = '';
+            showTyping();
+            setTimeout(function() {
+                hideTyping();
+                addMessage(getResponse(msg), 'bot');
+            }, 1200);
+        }
+
+        function sendQuickReply(text) {
+            addMessage(text, 'user');
+            showTyping();
+            setTimeout(function() {
+                hideTyping();
+                addMessage(getResponse(text), 'bot');
+            }, 1000);
+        }
+
+        function addMessage(text, type) {
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'message ' + type;
+            div.innerHTML = text.replace(/\n/g, '<br>');
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function showTyping() {
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.id = 'typing';
+            div.className = 'typing-indicator';
+            div.innerHTML = '<span></span><span></span><span></span>';
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typing = document.getElementById('typing');
+            if (typing) typing.remove();
+        }
+
+        setTimeout(function() {
+            if (!document.getElementById('chatWindow').classList.contains('open')) {
+                toggleChat();
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
