@@ -773,5 +773,33 @@ Für alle Demos: Kostenlos registrieren.`,
             }
         }, 5000);
     </script>
+    <script type="module">
+  // 1. Wir importieren die Funktionen aus dem Internet (CDN)
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+  import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // 2. Deine Konfiguration (aus deinem Dashboard)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBxW_BuzqzThMfCs_Rh_KemTVIL8uhZO5E",
+    authDomain: "zak-ai-production-c7709.firebaseapp.com",
+    projectId: "zak-ai-production-c7709",
+    storageBucket: "zak-ai-production-c7709.firebasestorage.app",
+    messagingSenderId: "898218613218",
+    appId: "1:898218613218:web:fb88ef56af430cf08741bb",
+    measurementId: "G-35H67DPNW5"
+  };
+
+  // 3. Firebase starten
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  
+  // 4. Datenbank und Login bereitstellen (Global verfügbar machen)
+  window.auth = getAuth(app);
+  window.db = getFirestore(app);
+
+  console.log("Firebase wurde erfolgreich geladen!");
+</script>
 </body>
 </html>
